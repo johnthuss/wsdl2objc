@@ -14,21 +14,21 @@
 %ENDIF
 %ELSE
 @interface %«className» : NSObject <NSCoding> {
-SOAPSigner *soapSigner;
+// SOAPSigner *soapSigner;
 %ENDIF
 
 %IFDEF IsAttributedString
 /* content */
-NSString *_content;
+// NSString *_content;
 %ENDIF
 
 /* elements */
 %IFDEF sequenceElements
 %FOREACH element in sequenceElements
 %IF element.useAnArray
-	NSMutableArray *%«element.name»;
+	// NSMutableArray *%«element.name»;
 %ELSE
-	%«element.type.classNameWithPtr» %«element.name»;
+	// %«element.type.classNameWithPtr» %«element.name»;
 %ENDIF
 %ENDFOR
 %ENDIF
@@ -36,7 +36,7 @@ NSString *_content;
 /* attributes */
 %IFDEF attributes
 %FOREACH attribute in attributes
-	%«attribute.type.classNameWithPtr» %«attribute.name»;
+	// %«attribute.type.classNameWithPtr» %«attribute.name»;
 %ENDFOR
 %ENDIF
 
@@ -53,12 +53,12 @@ NSString *_content;
 - (void)deserializeElementsFromNode:(xmlNodePtr)cur;
 
 %IFNDEF superClass
-@property (retain) SOAPSigner *soapSigner;
+@property (strong) SOAPSigner *soapSigner;
 %ENDIF
 
 %IFDEF IsAttributedString
 /* content */
-@property (nonatomic, retain) NSString *_content;
+@property (nonatomic) NSString *_content;
 %ENDIF
 
 /* elements */

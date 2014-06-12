@@ -10,7 +10,7 @@
 %FOREACH port in ports
 + (%«port.binding.className» *)%«port.binding.className»
 {
-	return [[[%«port.binding.className» alloc] initWithAddress:@"%«port.address»"] autorelease];
+	return [[%«port.binding.className» alloc] initWithAddress:@"%«port.address»"];
 }
 %ENDFOR
 

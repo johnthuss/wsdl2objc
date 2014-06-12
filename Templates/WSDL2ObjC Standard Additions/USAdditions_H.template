@@ -1,14 +1,3 @@
-//
-//	USAdditions.h
-//	WSDLParser
-//
-//	Created by John Ogle on 9/5/08.
-//	Copyright 2008 LightSPEED Technologies. All rights reserved.
-//	Modified by Matthew Faupel on 2009-05-06 to use NSDate instead of NSCalendarDate (for iPhone compatibility).
-//	Modifications copyright (c) 2009 Micropraxis Ltd.
-//	NSData (MBBase64) category taken from "MiloBird" at http://www.cocoadev.com/index.pl?BaseSixtyFour
-//
-
 #import <Foundation/Foundation.h>
 #import <libxml/tree.h>
 
@@ -78,10 +67,10 @@
 	NSString *detail;
 }
 
-@property (nonatomic, retain) NSString *faultcode;
-@property (nonatomic, retain) NSString *faultstring;
-@property (nonatomic, retain) NSString *faultactor;
-@property (nonatomic, retain) id detail;
+@property (nonatomic) NSString *faultcode;
+@property (nonatomic) NSString *faultstring;
+@property (nonatomic) NSString *faultactor;
+@property (nonatomic) id detail;
 @property (readonly) NSString *simpleFaultString;
 
 + (SOAPFault *)deserializeNode:(xmlNodePtr)cur expectedExceptions:(NSDictionary *)exceptions;
@@ -95,10 +84,10 @@
 @end
 
 @interface SOAPSigner : NSObject {
-    id<SOAPSignerDelegate> delegate;
+    __weak id<SOAPSignerDelegate> delegate;
 }
 
-@property (nonatomic, assign) id<SOAPSignerDelegate> delegate;
+@property (nonatomic, weak) id<SOAPSignerDelegate> delegate;
 
 - (id) initWithDelegate:(id<SOAPSignerDelegate>)del;
 - (NSString *)signRequest:(NSString *)req;

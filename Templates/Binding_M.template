@@ -80,26 +80,26 @@
 %FOREACH operation in operations
 - (%«className»Response *)%«operation.invokeString»
 {
-	return [self performSynchronousOperation:[[(%«className»_%«operation.className»*)[%«className»_%«operation.className» alloc] initWithBinding:self delegate:self
+	return [self performSynchronousOperation:[(%«className»_%«operation.className»*)[%«className»_%«operation.className» alloc] initWithBinding:self delegate:self
 %FOREACH part in operation.input.body.parts
 																							%«part.name»:a%«part.uname»
 %ENDFOR
 %FOREACH header in operation.input.headers
 																							%«header.name»:a%«header.uname»
 %ENDFOR
-																							] autorelease]];
+																							]];
 }
 
 - (void)%«operation.asyncInvokeString» delegate:(id<%«className»ResponseDelegate>)responseDelegate
 {
-	[self performAsynchronousOperation: [[(%«className»_%«operation.className»*)[%«className»_%«operation.className» alloc] initWithBinding:self delegate:responseDelegate
+	[self performAsynchronousOperation:[(%«className»_%«operation.className»*)[%«className»_%«operation.className» alloc] initWithBinding:self delegate:responseDelegate
 %FOREACH part in operation.input.body.parts
 																							 %«part.name»:a%«part.uname»
 %ENDFOR
 %FOREACH header in operation.input.headers
 																							 %«header.name»:a%«header.uname»
 %ENDFOR
-																							 ] autorelease]];
+																							 ]];
 }
 %ENDFOR
 
@@ -123,7 +123,7 @@
 		[request setAllHTTPHeaderFields:[NSHTTPCookie requestHeaderFieldsWithCookies:cookies]];
 	}
 	[request setValue:@"wsdl2objc" forHTTPHeaderField:@"User-Agent"];
-	[request setValue:soapAction forHTTPHeaderField:@"SOAPAction"];
+	if (soapAction.length) [request setValue:soapAction forHTTPHeaderField:@"SOAPAction"];
 	[request setValue:[[self MIMEType] stringByAppendingString:@"; charset=utf-8"] forHTTPHeaderField:@"Content-Type"];
 	// ERICBE: cast to unsigned long to prevent warnings about implicit cast of NSInteger
 	[request setValue:[NSString stringWithFormat:@"%lu", (unsigned long) [bodyData length]] forHTTPHeaderField:@"Content-Length"];
@@ -136,26 +136,13 @@
 	[request setHTTPBody: bodyData];
 		
 	if(self.logXMLInOut) {
-		NSLog(@"OutputHeaders:\n%@", [request allHTTPHeaderFields]);
-		NSLog(@"OutputBody:\n%@", outputBody);
+		NSLog(@"RequestHeaders:\n%@", [request allHTTPHeaderFields]);
+		NSLog(@"RequestBody:\n%@", outputBody);
 	}
 	
 	NSURLConnection *connection = [[NSURLConnection alloc] initWithRequest:request delegate:operation];
 	
 	operation.urlConnection = connection;
-	[connection release];
-}
-
-- (void) dealloc
-{
-	[soapSigner release];
-	// ERICBE: Assign sslManager property to nil to release it - avoids a compiler warning.
-	// [sslManager release];
-	self.sslManager = nil;
-	[address release];
-	[cookies release];
-	[customHeaders release];
-	[super dealloc];
 }
 
 @end
@@ -252,13 +239,7 @@
 
 - (void)dealloc
 {
-	[binding release];
-	[response release];
 	delegate = nil;
-	[responseData release];
-	[urlConnection release];
-	
-	[super dealloc];
 }
 
 @end
@@ -293,25 +274,8 @@
 	return self;
 }
 
-- (void)dealloc
-{
-%FOREACH part in operation.input.body.parts
-%IFEQ part.element.type.assignOrRetain retain
-	if(%«part.name» != nil) [%«part.name» release];
-%ENDIF
-%ENDFOR
-%FOREACH header in operation.input.headers
-%IFEQ header.type.assignOrRetain retain
-	if(%«header.name» != nil) [%«header.name» release];
-%ENDIF
-%ENDFOR
-	
-	[super dealloc];
-}
-
 - (void)main
 {
-	[response autorelease];
 	response = [%«className»Response new];
 	
 	%«className»_envelope *envelope = [%«className»_envelope sharedInstance];
@@ -320,10 +284,10 @@
 %IFDEF operation.input.headers
 	headerElements = [NSMutableDictionary dictionary];
 %FOREACH header in operation.input.headers
-%IFEQ header.type.assignOrRetain retain
+%IFEQ header.type.assignOrRetain strong
 	if(%«header.name» != nil) [headerElements setObject:%«header.name» forKey:@"%«header.wsdlName»"];
 %ELSIFEQ header.type.typeName boolean
-	if(%«header.name» != nil) [headerElements setObject:[[[USBoolean alloc] initWithBool:*%«header.name»] autorelease] forKey:@"%«header.wsdlName»"];
+	if(%«header.name» != nil) [headerElements setObject:[[USBoolean alloc] initWithBool:*%«header.name»] forKey:@"%«header.wsdlName»"];
 %ELSIFEQ header.type.typeName byte
 	if(%«header.name» != nil) [headerElements setObject:[NSNumber numberWithChar:*%«header.name»] forKey:@"%«header.wsdlName»"];
 %ELSIFEQ header.type.typeName int
@@ -365,10 +329,10 @@
 	bodyKeys = [NSMutableArray array];
 	id obj = nil;
 %FOREACH part in operation.input.body.parts
-%IFEQ part.element.type.assignOrRetain retain
+%IFEQ part.element.type.assignOrRetain strong
 	if(%«part.name» != nil) obj = %«part.name»;
 %ELSIFEQ part.element.type.typeName boolean
-	if(%«part.name» != nil) obj = [[[USBoolean alloc] initWithBool:*%«part.name»] autorelease];
+	if(%«part.name» != nil) obj = [[USBoolean alloc] initWithBool:*%«part.name»];
 %ELSIFEQ part.element.type.typeName byte
 	if(%«part.name» != nil) obj = [NSNumber numberWithChar:*%«part.name»];
 %ELSIFEQ part.element.type.typeName int
@@ -422,7 +386,7 @@
 		xmlNodePtr cur;
 		
 		if (binding.logXMLInOut) {
-			NSLog(@"ResponseBody:\n%@", [[[NSString alloc] initWithData:responseData encoding:NSUTF8StringEncoding] autorelease]);
+			NSLog(@"ResponseBody:\n%@", [[NSString alloc] initWithData:responseData encoding:NSUTF8StringEncoding]);
 		}
 		
 #if !TARGET_OS_IPHONE && (!defined(MAC_OS_X_VERSION_10_6) || MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_6)
@@ -549,15 +513,15 @@ static %«className»_envelope *%«className»SharedEnvelopeInstance = nil;
 	xmlNewNs(root, (const xmlChar*)"%«schema.fullName»", (const xmlChar*)"%«schema.prefix»");
 %ENDFOR
 	
+	xmlNodePtr headerNode = xmlNewDocNode(doc, soapEnvelopeNs, (const xmlChar*)"Header", NULL);
+	xmlAddChild(root, headerNode);
 	if((headerElements != nil) && ([headerElements count] > 0)) {
-		xmlNodePtr headerNode = xmlNewDocNode(doc, soapEnvelopeNs, (const xmlChar*)"Header", NULL);
-		xmlAddChild(root, headerNode);
-		
 		for(NSString *key in [headerElements allKeys]) {
 			id header = [headerElements objectForKey:key];
 			xmlAddChild(headerNode, [header xmlNodeForDoc:doc elementName:key elementNSPrefix:nil]);
 		}
 	}
+
 	
 	if((bodyElements != nil) && ([bodyElements count] > 0)) {
 		xmlNodePtr bodyNode = xmlNewDocNode(doc, soapEnvelopeNs, (const xmlChar*)"Body", NULL);
@@ -597,13 +561,6 @@ static %«className»_envelope *%«className»SharedEnvelopeInstance = nil;
 	}
 	
 	return self;
-}
-
-- (void)dealloc {
-	self.headers = nil;
-	self.bodyParts = nil;
-	self.error = nil;	
-	[super dealloc];
 }
 
 @end

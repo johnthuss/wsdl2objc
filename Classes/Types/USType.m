@@ -114,7 +114,7 @@
 		}
 	}
 	
-	return @"retain";
+	return @"strong";
 }
 
 - (NSString *)enumCount
